@@ -9,28 +9,15 @@ pipeline {
             }
         }
 
-        stage('Install') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -r requirements.txt
-                '''
+                sh 'docker build -t de-dashboard .'
             }
         }
 
         stage('Test') {
             steps {
-                sh '''
-                    . venv/bin/activate
-                    pytest tests/ -v
-                '''
-            }
-        }
-
-        stage('Build Docker') {
-            steps {
-                sh 'docker build -t de-dashboard .'
+                sh 'docker run --rm de-dashboard pytest tests/ -v'
             }
         }
 
@@ -39,7 +26,11 @@ pipeline {
                 sh '''
                     docker stop de-dashboard 2>/dev/null || true
                     docker rm de-dashboard 2>/dev/null || true
-                    docker run -d --name de-dashboard -p 5001:5001 de-dashboard
+
+                    docker run -d \
+                    --name de-dashboard \
+                    -p 5001:5001 \
+                    de-dashboard
                 '''
             }
         }
